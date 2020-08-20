@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:html' hide VideoElement, MediaDevices;
-import 'package:pedantic/pedantic.dart';
 import 'package:flutter/material.dart';
 import 'package:tekartik_camera_web/media_devices.dart';
 import 'package:tekartik_camera_web/media_devices_web.dart';
@@ -66,6 +65,10 @@ class _ScanPageState extends State<ScanPage> {
         _webcamWidget = HtmlElementView(key: viewKey, viewType: viewType);
       } catch (e) {
         print('error creating html element view $e');
+
+        scaffoldKey.currentState.showSnackBar(SnackBar(
+          content: Text('Error displaying camera: $e'),
+        ));
       }
 
       // refresh the UI
@@ -77,7 +80,7 @@ class _ScanPageState extends State<ScanPage> {
   void initState() {
     super.initState();
 
-    _timeoutTimer = Timer(Duration(seconds: 60), () {
+    _timeoutTimer = Timer(Duration(seconds: 30), () {
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -86,13 +89,16 @@ class _ScanPageState extends State<ScanPage> {
     viewKey = UniqueKey();
     videoElement = VideoElementWeb();
 
-    // Needed to iOS safari
+    // Needed for iOS safari
     videoElement.allowPlayInline();
 
     WidgetsBinding.instance.addPostFrameCallback((_) => afterFirstLayout());
   }
 
   Future afterFirstLayout() async {
+    // Again, just in case... Safari iOS
+    videoElement.allowPlayInline();
+
     try {
       var stream = mediaStream = await mediaDevices.getUserMedia(
         GetUserMediaConstraint(
@@ -103,12 +109,13 @@ class _ScanPageState extends State<ScanPage> {
       );
 
       videoElement.srcObject = stream;
-      unawaited(videoElement.play());
+      await videoElement.play();
       await _tick();
-    } on String catch (e) {
+    } catch (e) {
       print('error getting user Media $e');
+
       scaffoldKey.currentState.showSnackBar(SnackBar(
-        content: Text('error getting user Media $e'),
+        content: Text('Error scanning QR code: $e'),
       ));
     }
   }
@@ -134,6 +141,7 @@ class _ScanPageState extends State<ScanPage> {
             imageData: imageData.data,
             width: canvasElement.width,
             height: canvasElement.height);
+
         if (qrCode != null) {
           var color = '#FF3B58';
           void drawLine(QrCodePoint begin, QrCodePoint end) {
@@ -149,6 +157,7 @@ class _ScanPageState extends State<ScanPage> {
           drawLine(qrCode.location.topRight, qrCode.location.bottomRight);
           drawLine(qrCode.location.bottomRight, qrCode.location.bottomLeft);
           drawLine(qrCode.location.bottomLeft, qrCode.location.topLeft);
+
           _validateQrCodeData(qrCode.data);
         }
       }
