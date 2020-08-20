@@ -53,16 +53,21 @@ class _ScanPageState extends State<ScanPage> {
     if (canvasElement == null) {
       try {
         canvasElement = CanvasElement(
-            width: videoElement.videoWidth, height: videoElement.videoHeight);
+          width: videoElement.videoWidth,
+          height: videoElement.videoHeight,
+        );
         canvas = canvasElement.getContext('2d') as CanvasRenderingContext2D;
+
         registerViewFactoryWeb(viewType, (int viewId) {
           return canvasElement;
         });
+
         _aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
         _webcamWidget = HtmlElementView(key: viewKey, viewType: viewType);
       } catch (e) {
         print('error creating html element view $e');
       }
+
       // refresh the UI
       setState(() {});
     }
@@ -71,6 +76,7 @@ class _ScanPageState extends State<ScanPage> {
   @override
   void initState() {
     super.initState();
+
     _timeoutTimer = Timer(Duration(seconds: 60), () {
       if (mounted) {
         Navigator.of(context).pop();
@@ -83,30 +89,28 @@ class _ScanPageState extends State<ScanPage> {
     // Needed to iOS safari
     videoElement.allowPlayInline();
 
-    //_initCanvas();
-    () async {
-      try {
-        print('getting user media');
-        var stream = mediaStream = await mediaDevices.getUserMedia(
-            GetUserMediaConstraint(
-                video: GetUserMediaVideoConstraint(
-                    facingMode: mediaVideoConstraintFacingModeEnvironment)));
-        /*
-        var stream = await mediaDevices.getUserMedia(GetUserMediaConstraint(
-            video: GetUserMediaVideoConstraint(deviceId: deviceInfo.deviceId)));
+    WidgetsBinding.instance.addPostFrameCallback((_) => afterFirstLayout());
+  }
 
-         */
-        print('got user media');
+  Future afterFirstLayout() async {
+    try {
+      var stream = mediaStream = await mediaDevices.getUserMedia(
+        GetUserMediaConstraint(
+          video: GetUserMediaVideoConstraint(
+            facingMode: mediaVideoConstraintFacingModeEnvironment,
+          ),
+        ),
+      );
 
-        videoElement.srcObject = stream;
-        unawaited(videoElement.play());
-        await _tick();
-      } on String catch (e) {
-        print('error getting user Media $e');
-        scaffoldKey.currentState.showSnackBar(
-            SnackBar(content: Text('error getting user Media $e')));
-      }
-    }();
+      videoElement.srcObject = stream;
+      unawaited(videoElement.play());
+      await _tick();
+    } on String catch (e) {
+      print('error getting user Media $e');
+      scaffoldKey.currentState.showSnackBar(SnackBar(
+        content: Text('error getting user Media $e'),
+      ));
+    }
   }
 
   Future _tick() async {
@@ -115,8 +119,10 @@ class _ScanPageState extends State<ScanPage> {
       if (!mounted) {
         break;
       }
+
       if (videoElement.hasEnoughData) {
         _initCanvas();
+
         canvasElement.height = videoElement.videoHeight;
         canvasElement.width = videoElement.videoWidth;
         canvas.drawImage(
@@ -157,11 +163,14 @@ class _ScanPageState extends State<ScanPage> {
       _lastQrCodeData = data;
 
       _validateTimer?.cancel();
-      _validateTimer = Timer(Duration(milliseconds: 800), () {
-        if (mounted) {
-          Navigator.of(context).pop(data);
-        }
-      });
+      _validateTimer = Timer(
+        Duration(milliseconds: 800),
+        () {
+          if (mounted) {
+            Navigator.of(context).pop(data);
+          }
+        },
+      );
     }
   }
 
@@ -171,28 +180,35 @@ class _ScanPageState extends State<ScanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: scaffoldKey,
-      appBar: AppBar(
-        title: Text(widget.title ?? 'Scan QR code'),
-      ),
-      body: Column(children: [
-        Expanded(
+      appBar: widget.title != null
+          ? AppBar(
+              title: Text(widget.title),
+            )
+          : null,
+      body: Column(
+        children: [
+          Expanded(
             child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Container(
-                color: Colors.black,
-                child: _webcamWidget != null
-                    ? Align(
-                        alignment: Alignment.center,
-                        child: AspectRatio(
-                            aspectRatio: _aspectRatio, child: _webcamWidget),
-                      )
-                    : null,
-              ),
+              children: <Widget>[
+                Expanded(
+                  child: Container(
+                    color: Colors.black,
+                    child: _webcamWidget != null
+                        ? Align(
+                            alignment: Alignment.center,
+                            child: AspectRatio(
+                              aspectRatio: _aspectRatio,
+                              child: _webcamWidget,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ))
-      ]),
+          )
+        ],
+      ),
     );
   }
 }
