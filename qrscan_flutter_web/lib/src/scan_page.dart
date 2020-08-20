@@ -121,45 +121,50 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   Future _tick() async {
-    while (true) {
-      await window.animationFrame;
-      if (!mounted) {
-        break;
-      }
+    while (mounted) {
+      try {
+        await window.animationFrame;
 
-      if (videoElement.hasEnoughData) {
-        _initCanvas();
+        if (videoElement.hasEnoughData) {
+          _initCanvas();
 
-        canvasElement.height = videoElement.videoHeight;
-        canvasElement.width = videoElement.videoWidth;
-        canvas.drawImage(
-            (videoElement as VideoElementWeb).nativeVideoElement, 0, 0);
+          canvasElement.height = videoElement.videoHeight;
+          canvasElement.width = videoElement.videoWidth;
+          canvas.drawImage(
+              (videoElement as VideoElementWeb).nativeVideoElement, 0, 0);
 
-        var imageData = canvas.getImageData(
-            0, 0, canvasElement.width, canvasElement.height);
-        var qrCode = decodeQrCode(
-            imageData: imageData.data,
-            width: canvasElement.width,
-            height: canvasElement.height);
+          var imageData = canvas.getImageData(
+              0, 0, canvasElement.width, canvasElement.height);
+          var qrCode = decodeQrCode(
+              imageData: imageData.data,
+              width: canvasElement.width,
+              height: canvasElement.height);
 
-        if (qrCode != null) {
-          var color = '#FF3B58';
-          void drawLine(QrCodePoint begin, QrCodePoint end) {
-            canvas.beginPath();
-            canvas.moveTo(begin.x, begin.y);
-            canvas.lineTo(end.x, end.y);
-            canvas.lineWidth = 4;
-            canvas.strokeStyle = color;
-            canvas.stroke();
+          if (qrCode != null) {
+            var color = '#FF3B58';
+            void drawLine(QrCodePoint begin, QrCodePoint end) {
+              canvas.beginPath();
+              canvas.moveTo(begin.x, begin.y);
+              canvas.lineTo(end.x, end.y);
+              canvas.lineWidth = 4;
+              canvas.strokeStyle = color;
+              canvas.stroke();
+            }
+
+            drawLine(qrCode.location.topLeft, qrCode.location.topRight);
+            drawLine(qrCode.location.topRight, qrCode.location.bottomRight);
+            drawLine(qrCode.location.bottomRight, qrCode.location.bottomLeft);
+            drawLine(qrCode.location.bottomLeft, qrCode.location.topLeft);
+
+            _validateQrCodeData(qrCode.data);
           }
-
-          drawLine(qrCode.location.topLeft, qrCode.location.topRight);
-          drawLine(qrCode.location.topRight, qrCode.location.bottomRight);
-          drawLine(qrCode.location.bottomRight, qrCode.location.bottomLeft);
-          drawLine(qrCode.location.bottomLeft, qrCode.location.topLeft);
-
-          _validateQrCodeData(qrCode.data);
         }
+      } catch (e) {
+        print('error rendering frame $e');
+
+        scaffoldKey.currentState.showSnackBar(SnackBar(
+          content: Text('Error rendering frame: $e'),
+        ));
       }
     }
   }
