@@ -8,7 +8,8 @@ import 'package:tekartik_camera_web/video_element_web.dart';
 import 'package:tekartik_js_qr/js_qr.dart';
 import 'package:tekartik_qrscan_flutter_web/src/view_registry.dart';
 
-var mediaDevices = mediaDevicesBrowser;
+const _viewType = 'tekartik-qrscan-flutter-web-canvas';
+final mediaDevices = mediaDevicesBrowser;
 
 class ScanPage extends StatefulWidget {
   final String title;
@@ -18,8 +19,6 @@ class ScanPage extends StatefulWidget {
   @override
   _ScanPageState createState() => _ScanPageState();
 }
-
-var _viewType = 'tekartik-qrscan-flutter-web-canvas';
 
 class _ScanPageState extends State<ScanPage> {
   var scaffoldKey = GlobalKey<ScaffoldState>();
@@ -64,10 +63,8 @@ class _ScanPageState extends State<ScanPage> {
         _aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
         _webcamWidget = HtmlElementView(key: viewKey, viewType: viewType);
       } catch (e) {
-        print('error creating html element view $e');
-
         scaffoldKey.currentState.showSnackBar(SnackBar(
-          content: Text('Error displaying camera: $e'),
+          content: Text('Having trouble displaying the camera: $e'),
         ));
       }
 
@@ -85,6 +82,7 @@ class _ScanPageState extends State<ScanPage> {
         Navigator.of(context).pop();
       }
     });
+
     viewType = '$_viewType-${++_id}';
     viewKey = UniqueKey();
     videoElement = VideoElementWeb();
@@ -112,10 +110,8 @@ class _ScanPageState extends State<ScanPage> {
       await videoElement.play();
       await _tick();
     } catch (e) {
-      print('error getting user Media $e');
-
       scaffoldKey.currentState.showSnackBar(SnackBar(
-        content: Text('Error scanning QR code: $e'),
+        content: Text('Couldn\'t start camera: $e'),
       ));
     }
   }
@@ -136,9 +132,10 @@ class _ScanPageState extends State<ScanPage> {
           var imageData = canvas.getImageData(
               0, 0, canvasElement.width, canvasElement.height);
           var qrCode = decodeQrCode(
-              imageData: imageData.data,
-              width: canvasElement.width,
-              height: canvasElement.height);
+            imageData: imageData.data,
+            width: canvasElement.width,
+            height: canvasElement.height,
+          );
 
           if (qrCode != null) {
             var color = '#FF3B58';
@@ -160,10 +157,8 @@ class _ScanPageState extends State<ScanPage> {
           }
         }
       } catch (e) {
-        print('error rendering frame $e');
-
         scaffoldKey.currentState.showSnackBar(SnackBar(
-          content: Text('Error rendering frame: $e'),
+          content: Text('Having issues capturing from camera'),
         ));
       }
     }
