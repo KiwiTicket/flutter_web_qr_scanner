@@ -48,7 +48,7 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   void _initCanvas() {
-    if (canvasElement == null) {
+    if (canvas == null || canvasElement == null) {
       try {
         canvasElement = CanvasElement(
           width: videoElement.videoWidth,
@@ -63,9 +63,9 @@ class _ScanPageState extends State<ScanPage> {
         _aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
         _webcamWidget = HtmlElementView(key: viewKey, viewType: viewType);
       } catch (e) {
-        scaffoldKey.currentState.showSnackBar(SnackBar(
-          content: Text('Having trouble displaying the camera: $e'),
-        ));
+        // scaffoldKey.currentState.showSnackBar(SnackBar(
+        //   content: Text('Having trouble displaying the camera: $e'),
+        // ));
       }
 
       // refresh the UI
@@ -110,9 +110,9 @@ class _ScanPageState extends State<ScanPage> {
       await videoElement.play();
       await _tick();
     } catch (e) {
-      scaffoldKey.currentState.showSnackBar(SnackBar(
-        content: Text('Couldn\'t start camera: $e'),
-      ));
+      // scaffoldKey.currentState.showSnackBar(SnackBar(
+      //   content: Text('Couldn\'t start camera: $e'),
+      // ));
     }
   }
 
@@ -157,9 +157,9 @@ class _ScanPageState extends State<ScanPage> {
           }
         }
       } catch (e) {
-        scaffoldKey.currentState.showSnackBar(SnackBar(
-          content: Text('Having issues capturing from camera'),
-        ));
+        // scaffoldKey.currentState.showSnackBar(SnackBar(
+        //   content: Text('Having issues capturing from camera'),
+        // ));
       }
     }
   }
